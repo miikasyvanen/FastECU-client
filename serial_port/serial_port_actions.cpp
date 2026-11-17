@@ -610,5 +610,7 @@ unsigned long SerialPortActions::read_vbatt()
 
 void SerialPortActions::debug_print(QString message, bool timestamp, bool linefeed)
 {
+    Q_UNUSED(timestamp)
+    Q_UNUSED(linefeed)
     qDebug() << message;
 }
