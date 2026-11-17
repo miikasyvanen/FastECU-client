@@ -31,7 +31,9 @@ bool SerialPortActionsDirect::is_serial_port_open()
 
 bool SerialPortActionsDirect::set_kline_timings(uint32_t parameter, int value)
 {
-    _P1_MAX = value;
+    // Only P1_MAX is adjustable on the direct (non-J2534) serial path
+    if (parameter == SERIAL_P1_MAX)
+        _P1_MAX = value;
     return STATUS_SUCCESS;
 }
 
@@ -903,7 +905,6 @@ QByteArray SerialPortActionsDirect::append_ssm_header(QByteArray output)
 QByteArray SerialPortActionsDirect::append_iso9141_header(QByteArray output)
 {
     uint8_t chk_sum = 0;
-    uint8_t msglength = output.length();
 
     output.insert(0, kline_startbyte);
     output.insert(1, kline_target_id);
@@ -1158,13 +1159,14 @@ bool SerialPortActionsDirect::get_serial_num(char* serial)
     {
         unsigned int length;
         unsigned char data[256];
-    } outbuf;
+    } outbuf = {};
 
     inbuf.length = 2;
     inbuf.svcid = 5; // info
     inbuf.infosvcid = 1; // serial
 
-    outbuf.length = sizeof(outbuf.data);
+    Q_UNUSED(inbuf) // kept for the disabled vendor serial-number IOCTL below
+    outbuf.length = sizeof(outbuf.data) - 1;
 /*
     if (j2534->PassThruIoctl(devID,TX_IOCTL_APP_SERVICE,&inbuf,&outbuf))
     {
@@ -1212,10 +1214,10 @@ int SerialPortActionsDirect::init_j2534_connection()
     }
 
     // Get J2534 adapter and driver version numbers
-    char strApiVersion[256];
-    char strDllVersion[256];
-    char strFirmwareVersion[256];
-    char strSerial[256];
+    char strApiVersion[256] = {};
+    char strDllVersion[256] = {};
+    char strFirmwareVersion[256] = {};
+    char strSerial[256] = {};
 
     if (j2534->PassThruReadVersion(strApiVersion, strDllVersion, strFirmwareVersion, devID))
     {
@@ -1229,10 +1231,6 @@ int SerialPortActionsDirect::init_j2534_connection()
         return STATUS_ERROR;
     }
 
-    strApiVersion[strlen(strApiVersion)-1] = '\0';
-    strDllVersion[strlen(strDllVersion)-1] = '\0';
-    strFirmwareVersion[strlen(strFirmwareVersion)-1] = '\0';
-    strSerial[strlen(strSerial)-1] = '\0';
     emit LOG_D("J2534 API Version: " + QString(strApiVersion), true, true);
     emit LOG_D("J2534 DLL Version: " + QString(strDllVersion), true, true);
     emit LOG_D("Device Firmware Version: " + QString(strFirmwareVersion), true, true);

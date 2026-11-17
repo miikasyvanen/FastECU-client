@@ -714,6 +714,11 @@ long J2534::PassThruGetLastError(char *pErrorDescription)
 {
     long result = STATUS_NOERROR;
 
+    // No error text is tracked on Linux; return an empty string so callers
+    // never print an uninitialised buffer.
+    if (pErrorDescription)
+        pErrorDescription[0] = '\0';
+
     return result;
 }
 
