@@ -60,7 +60,7 @@ void J2534::close_serial_port()
     if (serial->isOpen())
     {
         serial->close();
-        delay(500);
+        delay(100);
     }
     opened_serial_port = "";
 }
@@ -590,9 +590,6 @@ long J2534::PassThruWriteMsgs(unsigned long ChannelID, const PASSTHRU_MSG *pMsg,
 
 long J2534::PassThruStartPeriodicMsg(unsigned long ChannelID, const PASSTHRU_MSG *pMsg, unsigned long *pMsgID, unsigned long TimeInterval)
 {
-    PASSTHRU_MSG rxmsg;
-    unsigned long numRxMsg;
-    unsigned long timeout = 10;
 
     QByteArray output;
     long result = STATUS_NOERROR;
@@ -606,7 +603,7 @@ long J2534::PassThruStartPeriodicMsg(unsigned long ChannelID, const PASSTHRU_MSG
     }
 
     write_serial_data(output);
-    PassThruReadMsgs(ChannelID, &rxmsg, &numRxMsg, timeout);
+    //PassThruReadMsgs(ChannelID, &rxmsg, &numRxMsg, timeout);
 
     *pMsgID = periodic_msg_id;
 
