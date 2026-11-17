@@ -27,6 +27,7 @@ bool RemoteUtility::set_progressbar_value(int value)
 
 QString RemoteUtility::ping(QString message)
 {
+    Q_UNUSED(message)
     //qDebug() << Q_FUNC_INFO << message;
     QString r = "pong";
     return r;

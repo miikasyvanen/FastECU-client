@@ -11,18 +11,24 @@ Startup::Startup(QObject *parent)
 Startup::Startup(QString peerAddress,
                  QObject *parent)
     : QObject(parent)
+    , heartbeatIntervalSerial(0)
+    , heartbeatIntervalUtility(0)
     , peerAddress(peerAddress)
     , webSocketSerial(new QWebSocket("",QWebSocketProtocol::VersionLatest,this))
-    , socket_serial(new WebSocketIoDevice(webSocketSerial, webSocketSerial))
-    , node_serial(new QRemoteObjectHost(webSocketSerial))
     , webSocketUtility(new QWebSocket("",QWebSocketProtocol::VersionLatest,this))
+    , socket_serial(new WebSocketIoDevice(webSocketSerial, webSocketSerial))
     , socket_utility(new WebSocketIoDevice(webSocketUtility, webSocketUtility))
+    , node_serial(new QRemoteObjectHost(webSocketSerial))
     , node_utility(new QRemoteObjectHost(webSocketUtility))
     , serial(new SerialPortActions(this))
     , utility(new RemoteUtility(this))
-    , heartbeatIntervalSerial(0)
-    , heartbeatIntervalUtility(0)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)   // QWebSocket::errorOccurred is new in Qt 6.5
+    const auto webSocketErrorSignal = &QWebSocket::errorOccurred;
+#else
+    const auto webSocketErrorSignal = QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error);
+#endif
+
     //SerialPortActions
     QObject::connect(webSocketSerial, &QWebSocket::textMessageReceived, this,
                      [&](QString message)
@@ -35,7 +41,7 @@ Startup::Startup(QString peerAddress,
                          }
                      }
                      );
-    QObject::connect(webSocketSerial, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error),
+    QObject::connect(webSocketSerial, webSocketErrorSignal,
                      this, [=](QAbstractSocket::SocketError error)
                      {
                         qDebug() << this->metaObject()->className() << "startOverNetwok QWebSocket error:" << error;
@@ -64,7 +70,7 @@ Startup::Startup(QString peerAddress,
                          }
                      }
                      );
-    QObject::connect(webSocketUtility, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error),
+    QObject::connect(webSocketUtility, webSocketErrorSignal,
                      this, [=](QAbstractSocket::SocketError error)
                      {
                          qDebug() << this->metaObject()->className() << "startOverNetwok QWebSocket error:" << error;
